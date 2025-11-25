@@ -295,29 +295,75 @@ def resumen_paths(paths: np.ndarray, fecha_inicio: date, fechas_future):
 
 def plot_hist_y_sim(df_hist: pd.DataFrame,
                     fechas_future,
-                    paths: np.ndarray):
-    """Gráfico 1: Histórico TC SUNAT + algunas trayectorias simuladas."""
+                    paths: np.ndarray,
+                    ventana_anos: int = 1):
+    """
+    Gráfico 1: Histórico TC SUNAT (últimos 'ventana_anos' años) + algunas trayectorias simuladas.
+    """
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    ax.plot(df_hist.index, df_hist["tc_sunat"], label="SUNAT histórico")
+    # --- 1) Recortar histórico a la ventana deseada ---
+    if len(df_hist) > 0:
+        ultima_fecha_hist = df_hist.index[-1]
+        cutoff = ultima_fecha_hist - pd.DateOffset(years=ventana_anos)
+        df_hist_plot = df_hist[df_hist.index >= cutoff]
+    else:
+        df_hist_plot = df_hist
 
+    # --- 2) Plot del histórico ---
+    ax.plot(
+        df_hist_plot.index,
+        df_hist_plot["tc_sunat"],
+        label="SUNAT histórico (último año)",
+        linewidth=1.8,
+    )
+
+    # Línea vertical: inicio de proyección
+    if len(df_hist) > 0:
+        ax.axvline(
+            df_hist.index[-1],
+            linestyle="--",
+            linewidth=1.0,
+            alpha=0.7,
+            label="Inicio de proyección",
+        )
+
+    # --- 3) Plot de simulaciones ---
     n_sims = paths.shape[0]
-    n_mostrar = min(100, n_sims)
+    n_mostrar = min(50, n_sims)  # menos trayectorias visibles para no saturar
     idx = np.random.choice(n_sims, n_mostrar, replace=False)
 
     fechas_all = [df_hist.index[-1]] + list(pd.to_datetime(fechas_future))
 
     for i in idx:
-        ax.plot(fechas_all, paths[i, :], alpha=0.15, linewidth=0.8)
+        ax.plot(
+            fechas_all,
+            paths[i, :],
+            alpha=0.08,
+            linewidth=0.8,
+        )
 
-    ax.set_title("Histórico TC SUNAT + simulaciones")
-    ax.set_xlabel("Fecha")
-    ax.set_ylabel("Tipo de cambio (S/ por US$)")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
+    # --- 4) Estilo del gráfico ---
+    ax.set_title(
+        "Histórico reciente del TC SUNAT + simulaciones",
+        fontsize=13,
+        pad=10,
+    )
+    ax.set_xlabel("Fecha", fontsize=11)
+    ax.set_ylabel("Tipo de cambio (S/ por US$)", fontsize=11)
 
+    ax.tick_params(axis="both", labelsize=9)
+
+    ax.grid(True, alpha=0.2, linestyle="--", linewidth=0.5)
+
+    # Quitar bordes superior y derecho
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+
+    ax.legend(frameon=False, fontsize=9, loc="upper left")
+
+    fig.tight_layout()
     st.pyplot(fig)
-
 
 def plot_media(df_resumen: pd.DataFrame):
     """Gráfico 2: media y banda 5%-95% de las proyecciones."""
