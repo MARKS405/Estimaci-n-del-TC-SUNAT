@@ -225,11 +225,11 @@ def parametros_escenario(mu_hist: float, sigma_hist: float, escenario: str):
     if escenario == "Base":
         return mu_hist, sigma_hist, 1.0
     elif escenario == "Poco riesgoso":
-        return mu_hist * 0.8, sigma_hist * 0.8, 0.8
+        return mu_hist + 0.0002, sigma_hist * 0.8, 0.8
     elif escenario == "Riesgoso":
-        return mu_hist * 1.1, sigma_hist * 1.1, 1.2
+        return mu_hist + 0.0006, sigma_hist * 1.1, 1.2
     elif escenario == "Muy riesgoso":
-        return mu_hist * 1.3, sigma_hist * 1.5, 1.5
+        return mu_hist + 0.001, sigma_hist * 1.5, 1.5
     else:
         return mu_hist, sigma_hist, 1.0
 
