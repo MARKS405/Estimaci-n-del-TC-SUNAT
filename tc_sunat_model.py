@@ -82,8 +82,6 @@ def generar_fechas_habiles(fecha_ini: date, n_dias: int):
 # Carga de datos desde BCRP (via usebcrp)
 # ------------------------------------------------------------
 
-@st.cache_data(ttl=86400)
-
 def parse_periodo_es(s):
     """
     Convierte strings tipo '04.Ene.21' a datetime usando meses en español.
@@ -118,55 +116,7 @@ def parse_periodo_es(s):
     except ValueError:
         return pd.NaT
 
-
-    """
-    Descarga la serie de TC SBS (venta) desde el BCRP usando usebcrp
-    y la devuelve como DataFrame con índice datetime y columna 'tc_sbs_venta'.
-    Se cachea por 1 día para evitar reconsultar siempre.
-    """
-    client = BCRP()
-    df = client.stat(series=[SERIE_TC_SBS_VENTA])  # sin rango: toda la historia
-
-    df = df.copy()
-
-    # 1) Intentar que el índice sea fecha
-    if not isinstance(df.index, (pd.DatetimeIndex, pd.PeriodIndex)):
-        posibles = [
-            c for c in df.columns
-            if any(s in c.lower() for s in ["time", "fecha", "period"])
-        ]
-        if posibles:
-            col_fecha = posibles[0]
-            df[col_fecha] = pd.to_datetime(df[col_fecha])
-            df = df.set_index(col_fecha)
-
-    if isinstance(df.index, pd.PeriodIndex):
-        df.index = df.index.to_timestamp()
-
-    df = df.sort_index()
-
-    # 2) Tomar la primera columna numérica como la serie de TC
-    value_cols = df.select_dtypes(include="number").columns
-
-    if len(value_cols) == 0:
-        for c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce")
-        value_cols = df.select_dtypes(include="number").columns
-
-    if len(value_cols) == 0:
-        raise ValueError(
-            "No se encontró ninguna columna numérica en la respuesta de usebcrp. "
-            "Revisa el DataFrame que retorna client.stat()."
-        )
-
-    serie_col = value_cols[0]
-    df = df[[serie_col]].rename(columns={serie_col: "tc_sbs_venta"})
-
-    # 3) Filtrar desde la fecha que te interesa
-    df = df[df.index >= pd.Timestamp(FECHA_INICIO_SERIE)]
-
-    return df
-
+@st.cache_data(ttl=86400)
 def obtener_dataframe_bcrp(codigo_serie: str, fecha_ini: date, fecha_fin: date) -> pd.DataFrame:
     """
     Descarga una serie del BCRP vía requests y devuelve un DataFrame con:
