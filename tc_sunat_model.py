@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import requests
 
 from datetime import date, datetime, timedelta
-from usebcrp import BCRP
 
 # ------------------------------------------------------------
 # Parámetros globales
