@@ -102,15 +102,7 @@ def main():
             return
 
         # 1) Cargar datos BCRP y construir TC SUNAT
-
-        SERIE_TC_SBS_VENTA = "PD04640PD"
-
-        # Fecha mínima que quieres usar como histórico
-        FECHA_INICIO_SERIE = date(2021, 1, 1)
-
-        hoy = date.today()
-
-        df_tc_sbs = obtener_dataframe_bcrp(SERIE_TC_SBS_VENTA,FECHA_INICIO_SERIE,hoy)
+        df_tc_sbs = obtener_dataframe_bcrp()
         df_sunat_full, df_sunat_habiles = construir_tc_sunat(df_tc_sbs)
 
         mask_hist = df_sunat_habiles.index.date <= fecha_inicio
