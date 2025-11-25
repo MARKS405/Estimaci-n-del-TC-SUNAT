@@ -181,7 +181,7 @@ def main():
 
         # Gráfico 1
         st.subheader("Histórico del TC SUNAT + simulaciones hasta la fecha final")
-        plot_hist_y_sim(df_hist, fechas_future, paths, ventana_anos=2)
+        plot_hist_y_sim(df_hist, fechas_future, paths, ventana_anos=1)
 
         # Gráfico 2
         st.subheader("Media de las simulaciones proyectadas (con banda 5%–95%)")
