@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta
 SERIE_TC_SBS_VENTA = "PD04640PD"
 
 # Fecha mínima que quieres usar como histórico
-FECHA_INICIO_SERIE = date(2023, 1, 1)
+FECHA_INICIO_SERIE = date(2021, 1, 1)
 
 # Tabla simulada de feriados en Perú (ejemplos).
 # >>> IMPORTANTE: reemplaza/actualiza esta lista manualmente.
