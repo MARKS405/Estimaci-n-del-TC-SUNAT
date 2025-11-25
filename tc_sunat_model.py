@@ -28,20 +28,20 @@ FERIADOS_PE = {
 }
 
 # Diccionario de meses en español
-
 MAPA_MESES_ES = {
-    "Ene": 1,
-    "Feb": 2,
-    "Mar": 3,
-    "Abr": 4,
-    "May": 5,
-    "Jun": 6,
-    "Jul": 7,
-    "Ago": 8,
-    "Set": 9,   # el BCRP suele usar 'Set'
-    "Oct": 10,
-    "Nov": 11,
-    "Dic": 12,
+    "ENE": 1,
+    "FEB": 2,
+    "MAR": 3,
+    "ABR": 4,
+    "MAY": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AGO": 8,
+    "SET": 9,   # el BCRP suele usar 'Set'
+    "SEP": 9,   # por si acaso
+    "OCT": 10,
+    "NOV": 11,
+    "DIC": 12,
 }
 
 # ------------------------------------------------------------
@@ -51,6 +51,7 @@ MAPA_MESES_ES = {
 def es_dia_habil(fecha: date) -> bool:
     """True si es lunes-viernes y no está en la tabla de feriados."""
     return fecha.weekday() < 5 and fecha not in FERIADOS_PE
+
 
 def contar_dias_habiles(fecha_ini: date, fecha_fin: date) -> int:
     """
@@ -64,6 +65,7 @@ def contar_dias_habiles(fecha_ini: date, fecha_fin: date) -> int:
             dias += 1
         f += timedelta(days=1)
     return dias
+
 
 def generar_fechas_habiles(fecha_ini: date, n_dias: int):
     """
@@ -79,64 +81,75 @@ def generar_fechas_habiles(fecha_ini: date, n_dias: int):
     return fechas
 
 # ------------------------------------------------------------
-# Carga de datos desde BCRP (via usebcrp)
+# Parser de fechas del BCRP (meses en español)
 # ------------------------------------------------------------
 
 def parse_periodo_es(s):
     """
-    Convierte strings tipo '04.Ene.21' a datetime usando meses en español.
-    Si no puede parsear, devuelve NaT.
+    Convierte strings tipo '04.Ene.21' (u otras variantes con separadores)
+    a datetime usando meses en español. Si no puede parsear, devuelve NaT.
     """
     if pd.isna(s):
         return pd.NaT
 
     s = str(s).strip()
-    # Esperamos algo tipo '04.Ene.21'
-    try:
-        dia_str, mes_str, anio_str = s.split(".")
-    except ValueError:
+
+    import re
+    # día (1-2 dígitos), separador, mes (3 letras), separador, año (2-4 dígitos)
+    m = re.search(r"(\d{1,2})[.\-/ ]+([A-Za-zÁÉÍÓÚÑñ]{3})[.\-/ ]+(\d{2,4})", s)
+    if not m:
         return pd.NaT
 
-    mes_str = mes_str[:3]  # por si viniera 'Ene.' con algo raro
-    mes = MAPA_MESES_ES.get(mes_str)
+    dia_str, mes_str, anio_str = m.groups()
+
+    mes_key = mes_str[:3].upper()
+    mes = MAPA_MESES_ES.get(mes_key)
     if mes is None:
         return pd.NaT
 
     try:
         dia = int(dia_str)
-        anio_2 = int(anio_str)
+        anio_val = int(anio_str)
     except ValueError:
         return pd.NaT
 
-    # Convertir año de 2 dígitos a 4 dígitos (regla simple)
-    anio = 2000 + anio_2 if anio_2 <= 50 else 1900 + anio_2
+    # Año de 2 dígitos -> 20xx (simple)
+    if len(anio_str) == 2:
+        anio = 2000 + anio_val if anio_val <= 50 else 1900 + anio_val
+    else:
+        anio = anio_val
 
     try:
         return datetime(anio, mes, dia)
     except ValueError:
         return pd.NaT
 
+# ------------------------------------------------------------
+# Carga de datos desde BCRP (via requests)
+# ------------------------------------------------------------
+
 @st.cache_data(ttl=86400)
-def obtener_dataframe_bcrp(codigo_serie: str, fecha_ini: date, fecha_fin: date) -> pd.DataFrame:
+def obtener_dataframe_bcrp(
+    codigo_serie: str = SERIE_TC_SBS_VENTA,
+    fecha_ini: date = FECHA_INICIO_SERIE,
+    fecha_fin: date | None = None,
+) -> pd.DataFrame:
     """
     Descarga una serie del BCRP vía requests y devuelve un DataFrame con:
-      - columna 'Periodo' en datetime
-      - una columna por cada serie numérica
+      - índice datetime (Periodo)
+      - una columna 'tc_sbs_venta' (float)
     """
+    if fecha_fin is None:
+        fecha_fin = date.today()
+
     url_base = "https://estadisticas.bcrp.gob.pe/estadisticas/series/api/"
     formato_salida = "json"
 
-    hoy = date.today()
-
-    codigo_serie=SERIE_TC_SBS_VENTA,
-    fecha_ini=FECHA_INICIO_SERIE,
-    fecha_fin=hoy
-
     periodo_inicial = fecha_ini.strftime("%Y-%m-%d")
     periodo_final = fecha_fin.strftime("%Y-%m-%d")
-    
+
     url = f"{url_base}{codigo_serie}/{formato_salida}/{periodo_inicial}/{periodo_final}"
-    
+
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception(f"Error en la consulta al BCRP: {response.status_code}")
@@ -146,30 +159,23 @@ def obtener_dataframe_bcrp(codigo_serie: str, fecha_ini: date, fecha_fin: date) 
     except ValueError:
         raise Exception("Error: La consulta no devolvió un JSON válido")
 
-    # Nombres de columnas (series)
-    columns = consulta.get("config", {}).get("series", [])
-    nombres_columnas = [i.get("name") for i in columns]
-
     # Periodos y valores
     datos = consulta.get("periods", [])
     periodo = [i.get("name") for i in datos]
     valores = [(i.get("values") or [np.nan])[0] for i in datos]
 
-    dataset = {"Periodo": periodo, "tc_sbs_venta": valores}
-    df = pd.DataFrame(dataset)
-
-    if not nombres_columnas:
-        raise Exception("No se encontraron nombres de columnas en la respuesta del BCRP.")
+    df = pd.DataFrame({"Periodo": periodo, "valor": valores})
 
     # Reemplazar 'n.d.' por NaN y convertir a float
-    df.replace("n.d.", np.nan, inplace=True)
-    columns_to_float = df.columns[1:]  # todas menos 'Periodo'
-    df[columns_to_float] = df[columns_to_float].astype(float)
+    df["valor"] = df["valor"].replace("n.d.", np.nan).astype(float)
 
-    # Convertir 'Periodo' a datetime y usarlo como índice
-    # Convertimos 'Periodo' usando el parser de meses en español
+    # Convertir 'Periodo' usando el parser de meses en español
     df["Periodo"] = df["Periodo"].apply(parse_periodo_es)
+    df = df.dropna(subset=["Periodo"])
     df = df.set_index("Periodo").sort_index()
+
+    # Renombrar columna a nombre estándar
+    df = df.rename(columns={"valor": "tc_sbs_venta"})
 
     return df
 
@@ -182,11 +188,21 @@ def construir_tc_sunat(df_sbs: pd.DataFrame):
       - df_habiles: solo días lunes-viernes (sin fines de semana)
     """
     df = df_sbs.copy()
+
+    # Si está vacío, devolvemos estructuras vacías seguras
+    if df.empty:
+        return df.assign(
+            tc_sunat=pd.Series(dtype=float),
+            es_fin_de_semana=pd.Series(dtype=bool)
+        ), df
+
+    # Desplazamos un día: SUNAT(t) = SBS(t-1)
     df["tc_sunat"] = df["tc_sbs_venta"].shift(1)
 
-    if pd.isna(df["tc_sunat"].iloc[0]):
-        df.iloc[0, df.columns.get_loc("tc_sunat")] = df["tc_sbs_venta"].iloc[0]
+    # Rellenamos el primer NaN con el primer valor válido
+    df["tc_sunat"].fillna(method="bfill", inplace=True)
 
+    # Marcamos fines de semana y filtramos hábiles
     df["es_fin_de_semana"] = df.index.weekday >= 5
     df_habiles = df[~df["es_fin_de_semana"]].copy()
 
@@ -196,7 +212,6 @@ def calcular_retornos_log(df_habiles: pd.DataFrame) -> pd.Series:
     """Retornos logarítmicos diarios del TC SUNAT (solo días hábiles)."""
     r = np.log(df_habiles["tc_sunat"]).diff().dropna()
     return r
-
 
 # ------------------------------------------------------------
 # Modelos de simulación
@@ -274,7 +289,6 @@ def resumen_paths(paths: np.ndarray, fecha_inicio: date, fechas_future):
     )
     return df
 
-
 # ------------------------------------------------------------
 # Gráficos
 # ------------------------------------------------------------
@@ -286,7 +300,6 @@ def plot_hist_y_sim(df_hist: pd.DataFrame,
     fig, ax = plt.subplots(figsize=(10, 5))
 
     ax.plot(df_hist.index, df_hist["tc_sunat"], label="SUNAT histórico")
-
 
     n_sims = paths.shape[0]
     n_mostrar = min(100, n_sims)
