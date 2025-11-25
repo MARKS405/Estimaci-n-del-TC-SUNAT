@@ -315,22 +315,12 @@ def plot_hist_y_sim(df_hist: pd.DataFrame,
         df_hist_plot.index,
         df_hist_plot["tc_sunat"],
         label="SUNAT histórico (último año)",
-        linewidth=1.8,
+        linewidth=2.0,   # un poco más grueso
     )
 
-    # Línea vertical: inicio de proyección
-    if len(df_hist) > 0:
-        ax.axvline(
-            df_hist.index[-1],
-            linestyle="--",
-            linewidth=1.0,
-            alpha=0.7,
-            label="Inicio de proyección",
-        )
-
-    # --- 3) Plot de simulaciones ---
+    # --- 3) Plot de simulaciones (más visibles) ---
     n_sims = paths.shape[0]
-    n_mostrar = min(50, n_sims)  # menos trayectorias visibles para no saturar
+    n_mostrar = min(60, n_sims)  # mostramos hasta 60 trayectorias
     idx = np.random.choice(n_sims, n_mostrar, replace=False)
 
     fechas_all = [df_hist.index[-1]] + list(pd.to_datetime(fechas_future))
@@ -339,8 +329,8 @@ def plot_hist_y_sim(df_hist: pd.DataFrame,
         ax.plot(
             fechas_all,
             paths[i, :],
-            alpha=0.08,
-            linewidth=0.8,
+            alpha=0.25,     # más opacas
+            linewidth=1.2,  # más gruesas
         )
 
     # --- 4) Estilo del gráfico ---
@@ -353,7 +343,6 @@ def plot_hist_y_sim(df_hist: pd.DataFrame,
     ax.set_ylabel("Tipo de cambio (S/ por US$)", fontsize=11)
 
     ax.tick_params(axis="both", labelsize=9)
-
     ax.grid(True, alpha=0.2, linestyle="--", linewidth=0.5)
 
     # Quitar bordes superior y derecho
