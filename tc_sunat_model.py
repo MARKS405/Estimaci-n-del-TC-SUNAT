@@ -247,6 +247,8 @@ def obtener_dataframe_bcrp(
 
     return df
 
+from datetime import date
+
 def construir_tc_sunat(df_sbs: pd.DataFrame):
     """
     A partir de la serie de TC SBS (venta) construye la serie de TC SUNAT:
@@ -256,15 +258,19 @@ def construir_tc_sunat(df_sbs: pd.DataFrame):
     2. Se rellena hacia adelante (ffill) cuando falten datos SBS: regla "tomar el TC
        del día inmediato anterior".
     3. Se define TC_SUNAT(t) = TC_SBS_filled(t-1).
+    4. Se marcan fines de semana y feriados, y se construye un DataFrame solo con
+       días hábiles reales (sin sábados, domingos ni feriados).
 
     Devuelve:
       - df_full: con todos los días calendario y tc_sunat
-      - df_habiles: solo días lunes-viernes (sin fines de semana)
+      - df_habiles: solo días hábiles reales (lunes-viernes y no feriados)
     """
     if df_sbs.empty:
         df_vacio = df_sbs.copy()
         df_vacio["tc_sunat"] = pd.Series(dtype=float)
         df_vacio["es_fin_de_semana"] = pd.Series(dtype=bool)
+        df_vacio["es_feriado"] = pd.Series(dtype=bool)
+        df_vacio["es_habil_real"] = pd.Series(dtype=bool)
         return df_vacio, df_vacio
 
     df = df_sbs.copy()
@@ -281,15 +287,20 @@ def construir_tc_sunat(df_sbs: pd.DataFrame):
 
     # 3) SUNAT(t) = SBS_filled(t-1)
     df_full["tc_sunat"] = df_full["tc_sbs_venta"].shift(1)
-
-    # Para el primer día (que queda NaN) rellenamos con el primer valor disponible
     df_full["tc_sunat"].fillna(method="bfill", inplace=True)
 
-    # 4) Marcar fines de semana y construir serie de días hábiles
+    # 4) Marcar fines de semana y feriados
     df_full["es_fin_de_semana"] = df_full.index.weekday >= 5
-    df_habiles = df_full[~df_full["es_fin_de_semana"]].copy()
+    df_full["es_feriado"] = df_full.index.date.map(lambda d: d in FERIADOS_PE)
+
+    # Día hábil real = no fin de semana, no feriado
+    df_full["es_habil_real"] = ~(df_full["es_fin_de_semana"] | df_full["es_feriado"])
+
+    # 5) DataFrame solo con días hábiles reales
+    df_habiles = df_full[df_full["es_habil_real"]].copy()
 
     return df_full, df_habiles
+
 
 def calcular_retornos_log(df_habiles: pd.DataFrame) -> pd.Series:
     """Retornos logarítmicos diarios del TC SUNAT (solo días hábiles)."""
