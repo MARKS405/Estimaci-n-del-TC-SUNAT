@@ -182,31 +182,46 @@ def obtener_dataframe_bcrp(
 def construir_tc_sunat(df_sbs: pd.DataFrame):
     """
     A partir de la serie de TC SBS (venta) construye la serie de TC SUNAT:
-    TC_SUNAT(t) = TC_SBS_VENTA(t-1).
+
+    1. Se reindexa la serie SBS a TODOS los días calendario (incluyendo fines de semana),
+       desde la primera fecha disponible hasta 'hoy'.
+    2. Se rellena hacia adelante (ffill) cuando falten datos SBS: regla "tomar el TC
+       del día inmediato anterior".
+    3. Se define TC_SUNAT(t) = TC_SBS_filled(t-1).
+
     Devuelve:
-      - df_total: con todos los días y tc_sunat
+      - df_full: con todos los días calendario y tc_sunat
       - df_habiles: solo días lunes-viernes (sin fines de semana)
     """
+    if df_sbs.empty:
+        df_vacio = df_sbs.copy()
+        df_vacio["tc_sunat"] = pd.Series(dtype=float)
+        df_vacio["es_fin_de_semana"] = pd.Series(dtype=bool)
+        return df_vacio, df_vacio
+
     df = df_sbs.copy()
 
-    # Si está vacío, devolvemos estructuras vacías seguras
-    if df.empty:
-        return df.assign(
-            tc_sunat=pd.Series(dtype=float),
-            es_fin_de_semana=pd.Series(dtype=bool)
-        ), df
+    # 1) Índice calendario completo: desde el primer dato SBS hasta hoy
+    first_date = df.index.min().date()
+    today = date.today()
+    idx_full = pd.date_range(start=first_date, end=today, freq="D")
 
-    # Desplazamos un día: SUNAT(t) = SBS(t-1)
-    df["tc_sunat"] = df["tc_sbs_venta"].shift(1)
+    # 2) Reindexar SBS a calendario y rellenar con último valor conocido
+    df_full = df.reindex(idx_full)
+    df_full.index.name = "Periodo"
+    df_full["tc_sbs_venta"] = df_full["tc_sbs_venta"].ffill()
 
-    # Rellenamos el primer NaN con el primer valor válido
-    df["tc_sunat"].fillna(method="bfill", inplace=True)
+    # 3) SUNAT(t) = SBS_filled(t-1)
+    df_full["tc_sunat"] = df_full["tc_sbs_venta"].shift(1)
 
-    # Marcamos fines de semana y filtramos hábiles
-    df["es_fin_de_semana"] = df.index.weekday >= 5
-    df_habiles = df[~df["es_fin_de_semana"]].copy()
+    # Para el primer día (que queda NaN) rellenamos con el primer valor disponible
+    df_full["tc_sunat"].fillna(method="bfill", inplace=True)
 
-    return df, df_habiles
+    # 4) Marcar fines de semana y construir serie de días hábiles
+    df_full["es_fin_de_semana"] = df_full.index.weekday >= 5
+    df_habiles = df_full[~df_full["es_fin_de_semana"]].copy()
+
+    return df_full, df_habiles
 
 def calcular_retornos_log(df_habiles: pd.DataFrame) -> pd.Series:
     """Retornos logarítmicos diarios del TC SUNAT (solo días hábiles)."""
