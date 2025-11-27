@@ -247,8 +247,6 @@ def obtener_dataframe_bcrp(
 
     return df
 
-from datetime import date
-
 def construir_tc_sunat(df_sbs: pd.DataFrame):
     """
     A partir de la serie de TC SBS (venta) construye la serie de TC SUNAT:
@@ -337,7 +335,7 @@ def simular_gbm(S0: float, mu: float, sigma: float,
     Simula trayectorias bajo un GBM discreto.
     Devuelve un array (n_sims, n_steps+1) con la trayectoria completa.
     """
-    S = np.zeros((n_sims, n_steps + 1), dtype=float)
+    S = np.zeros((n_sims, n_steps + 1), dtype=np.float64)
     S[:, 0] = S0
 
     drift = (mu - 0.5 * sigma**2) * dt
