@@ -320,11 +320,11 @@ def parametros_escenario(mu_hist: float, sigma_hist: float, escenario: str):
     if escenario == "Base":
         return mu_hist, sigma_hist, 1.0
     elif escenario == "Poco riesgoso":
-        return mu_hist + 0.0002, sigma_hist * 0.8, 0.8
+        return mu_hist + 0.0002, sigma_hist * 0.8, 0.0002
     elif escenario == "Riesgoso":
-        return mu_hist + 0.0006, sigma_hist * 1.1, 1.2
+        return mu_hist + 0.0006, sigma_hist * 1.1, 0.0006
     elif escenario == "Muy riesgoso":
-        return mu_hist + 0.001, sigma_hist * 1.5, 1.5
+        return mu_hist + 0.001, sigma_hist * 1.5, 0.001
     else:
         return mu_hist, sigma_hist, 1.0
 
@@ -359,7 +359,7 @@ def simular_bootstrap(S0: float, retornos_log: np.ndarray,
 
     for t in range(1, n_steps + 1):
         idx = np.random.randint(0, n_hist, size=n_sims)
-        r = retornos_log[idx] * escala_vol
+        r = retornos_log[idx] + escala_vol
         S[:, t] = S[:, t - 1] * np.exp(r)
 
     return S
