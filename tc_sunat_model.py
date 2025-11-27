@@ -287,11 +287,15 @@ def construir_tc_sunat(df_sbs: pd.DataFrame):
 
     # 3) SUNAT(t) = SBS_filled(t-1)
     df_full["tc_sunat"] = df_full["tc_sbs_venta"].shift(1)
-    df_full["tc_sunat"].fillna(method="bfill", inplace=True)
+
+    # Rellenar el primer NaN sin usar inplace (evita el FutureWarning)
+    df_full["tc_sunat"] = df_full["tc_sunat"].bfill()
 
     # 4) Marcar fines de semana y feriados
     df_full["es_fin_de_semana"] = df_full.index.weekday >= 5
-    df_full["es_feriado"] = df_full.index.date.map(lambda d: d in FERIADOS_PE)
+
+    # df_full.index.date -> numpy array, usamos list comprehension
+    df_full["es_feriado"] = [d in FERIADOS_PE for d in df_full.index.date]
 
     # Día hábil real = no fin de semana, no feriado
     df_full["es_habil_real"] = ~(df_full["es_fin_de_semana"] | df_full["es_feriado"])
@@ -300,7 +304,6 @@ def construir_tc_sunat(df_sbs: pd.DataFrame):
     df_habiles = df_full[df_full["es_habil_real"]].copy()
 
     return df_full, df_habiles
-
 
 def calcular_retornos_log(df_habiles: pd.DataFrame) -> pd.Series:
     """Retornos logarítmicos diarios del TC SUNAT (solo días hábiles)."""
