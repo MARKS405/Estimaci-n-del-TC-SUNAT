@@ -19,11 +19,79 @@ FECHA_INICIO_SERIE = date(2021, 1, 1)
 # Tabla simulada de feriados en Perú (ejemplos).
 # >>> IMPORTANTE: reemplaza/actualiza esta lista manualmente.
 FERIADOS_PE = {
+    date(2021, 4, 1),   # Jueves Santo
+    date(2021, 4, 2),   # Viernes Santo
+    date(2021, 5, 1),   # Día de trabajo
+    date(2021, 6, 29),   # Día de San Pedro y San Pablo
+    date(2021, 7, 28),   # Fiestas Patrias
+    date(2021, 7, 29),   # Fiestas Patrias
+    date(2021, 8, 30),   # Santa Rosa de Lima
+    date(2021, 10, 8),   # Combate de Angamos
+    date(2021, 11, 1),   # Día de Todos los Santos
+    date(2021, 12, 8),   # Día de la Inmaculada Concepción
+    date(2021, 12, 25),   # Navidad    
+    date(2022, 1, 1),   # Año Nuevo
+    date(2022, 4, 14),   # Jueves Santo
+    date(2022, 4, 15),   # Viernes Santo
+    date(2022, 4, 17),   # Domingo de Resurrección
+    date(2022, 5, 1),   # Día Internacional de los Trabajadores (Día del Trabajo)
+    date(2022, 6, 29),   # Día de San Pedro y San Pablo
+    date(2022, 7, 28),   # Fiestas Patrias
+    date(2022, 7, 29),   # Fiestas Patrias
+    date(2022, 8, 6),   # Batalla de Junín
+    date(2022, 8, 30),   # Santa Rosa de Lima
+    date(2022, 10, 8),   # Combate Naval de Angamos
+    date(2022, 11, 1),   # Día de Todos los Santos
+    date(2022, 12, 8),   # Día de la Inmaculada Concepción
+    date(2022, 12, 9),   # Batalla de Ayacucho
+    date(2022, 12, 25),   # Navidad    
+    date(2023, 1, 1),   # Año Nuevo
+    date(2023, 4, 6),   # Jueves Santo
+    date(2023, 4, 7),   # Viernes Santo
+    date(2023, 5, 1),   # Día Internacional de los Trabajadores (Día del Trabajo)
+    date(2023, 6, 29),   # Día de San Pedro y San Pablo
+    date(2023, 7, 23),   # Día de la Fuerza Aérea del Perú
+    date(2023, 7, 28),   # Fiestas Patrias
+    date(2023, 7, 29),   # Fiestas Patrias
+    date(2023, 8, 6),   # Batalla de Junín
+    date(2023, 8, 30),   # Santa Rosa de Lima
+    date(2023, 10, 8),   # Combate Naval de Angamos
+    date(2023, 11, 1),   # Día de Todos los Santos
+    date(2023, 12, 8),   # Día de la Inmaculada Concepción
+    date(2023, 12, 9),   # Batalla de Ayacucho
+    date(2023, 12, 25),   # Navidad    
+    date(2024, 1, 1),   # Año Nuevo
+    date(2024, 3, 28),   # Jueves Santo
+    date(2024, 3, 29),   # Viernes Santo
+    date(2024, 5, 1),   # Día Internacional de los Trabajadores (Día del Trabajo)
+    date(2024, 6, 7),   # Batalla de Arica y Día de la Bandera
+    date(2024, 6, 29),   # Día de San Pedro y San Pablo
+    date(2024, 7, 23),   # Día de la Fuerza Aérea del Perú
+    date(2024, 7, 28),   # Fiestas Patrias
+    date(2024, 7, 29),   # Fiestas Patrias
+    date(2024, 8, 6),   # Batalla de Junín
+    date(2024, 8, 30),   # Santa Rosa de Lima
+    date(2024, 10, 8),   # Combate Naval de Angamos
+    date(2024, 11, 1),   # Día de Todos los Santos
+    date(2024, 12, 8),   # Día de la Inmaculada Concepción
+    date(2024, 12, 9),   # Batalla de Ayacucho
+    date(2024, 12, 25),   # Navidad    
     date(2025, 1, 1),   # Año Nuevo
-    date(2025, 3, 24),  # EJEMPLO: feriado cualquiera
-    date(2025, 3, 25),  # EJEMPLO
-    date(2025, 5, 1),   # Día del Trabajo
-    date(2024, 12, 25), # Navidad 2024
+    date(2025, 4, 17),   # Jueves Santo
+    date(2025, 4, 18),   # Viernes Santo
+    date(2025, 5, 1),   # Día Internacional de los Trabajadores (Día del Trabajo)
+    date(2025, 6, 7),   # Batalla de Arica y Día de la Bandera
+    date(2025, 6, 29),   # Día de San Pedro y San Pablo
+    date(2025, 7, 23),   # Día de la Fuerza Aérea del Perú
+    date(2025, 7, 28),   # Fiestas Patrias
+    date(2025, 7, 29),   # Fiestas Patrias
+    date(2025, 8, 6),   # Batalla de Junín
+    date(2025, 8, 30),   # Santa Rosa de Lima
+    date(2025, 10, 8),   # Combate Naval de Angamos
+    date(2025, 11, 1),   # Día de Todos los Santos
+    date(2025, 12, 8),   # Día de la Inmaculada Concepción
+    date(2025, 12, 9),   # Batalla de Ayacucho
+    date(2025, 12, 25),   # Navidad
     # Añade aquí todos los feriados que quieras considerar...
 }
 
